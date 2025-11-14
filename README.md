@@ -1,4 +1,4 @@
-﻿# AuthService API
+﻿# AuthService API.
 
 A centralized authentication and authorization service for multi-tenant, multi-application platforms. Built with ASP.NET Core 8, Entity Framework Core, and SQL Server.
 

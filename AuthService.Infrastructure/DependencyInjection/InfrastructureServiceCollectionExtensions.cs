@@ -25,6 +25,7 @@ namespace AuthService.Infrastructure.DependencyInjection
             services.AddScoped<IUserRoleRepository, UserRoleRepository>();
             services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
             services.AddScoped<IUserAppStatusRepository, UserAppStatusRepository>();
+            services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
             return services;
         }

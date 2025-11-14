@@ -20,6 +20,7 @@ namespace AuthService.Application.Interfaces
         IUserRoleRepository UserRoleRepository { get; }
         IRolePermissionRepository RolePermissionRepository { get; }
         IUserAppStatusRepository UserAppStatusRepository { get; }
+        IPasswordResetTokenRepository PasswordResetTokenRepository { get; }
 
         Task<int> SaveChangesAsync();
     }

@@ -1,4 +1,5 @@
-﻿using AuthService.Domain.Entities;
+﻿using AuthService.Application.DTOs;
+using AuthService.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,4 +19,26 @@ namespace AuthService.Application.Helpers
             return user.GlobalAccountStatus;
         }
     }
+
+    public static class StatusHelper
+    {
+        public static bool IsLoginAllowed(string status)
+        {
+            return status == AccountStatus.Active
+                || status == AccountStatus.Approved;
+        }
+
+        public static string GetDisplayStatus(User user, App app)
+        {
+            if (user.IsDeleted) return AccountStatus.Deleted;
+            if (!user.IsEmailVerified) return AccountStatus.NeedEmailVerify;
+            if (!user.IsPhoneVerified) return AccountStatus.NeedPhoneVerify;
+
+
+
+            return user.GlobalAccountStatus.ToString();
+        }
+    }
+
+
 }

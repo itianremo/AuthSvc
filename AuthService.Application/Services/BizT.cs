@@ -30,6 +30,7 @@ namespace AuthService.Application.Services
         public IUserRoleRepository UserRoleRepository => _provider.GetRequiredService<IUserRoleRepository>();
         public IRolePermissionRepository RolePermissionRepository => _provider.GetRequiredService<IRolePermissionRepository>();
         public IUserAppStatusRepository UserAppStatusRepository => _provider.GetRequiredService<IUserAppStatusRepository>();
+        public IPasswordResetTokenRepository PasswordResetTokenRepository => _provider.GetRequiredService<IPasswordResetTokenRepository>();
 
         public Task<int> SaveChangesAsync()
         {

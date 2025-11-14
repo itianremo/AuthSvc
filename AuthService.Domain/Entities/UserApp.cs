@@ -14,6 +14,8 @@ namespace AuthService.Domain.Entities
 
         public string AccountStatus { get; set; } // active, suspended, etc.
         public string RefreshToken { get; set; } = string.Empty;
+        public DateTime? RefreshTokenExpiry { get; set; }
+
         public DateTime? LastLogin { get; set; }
 
         public User User { get; set; }

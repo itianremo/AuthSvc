@@ -20,6 +20,7 @@ namespace AuthService.Application.DependencyInjection
             services.AddScoped<IUserRoleBiz, UserRoleBiz>();
             services.AddScoped<IRolePermissionBiz, RolePermissionBiz>();
             services.AddScoped<IUserAppStatusBiz, UserAppStatusBiz>();
+            services.AddScoped<IPasswordResetBiz, PasswordResetBiz>();
 
             // Identity helpers / configuration used by application logic
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
