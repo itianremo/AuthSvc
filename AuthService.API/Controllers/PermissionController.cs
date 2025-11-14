@@ -1,3 +1,4 @@
+using AuthService.API.Extensions;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
@@ -14,11 +15,15 @@ namespace AuthService.API.Controllers
     {
         private readonly IPermissionBiz _permissionBiz;
         private readonly IRolePermissionBiz _rolePermissionBiz;
+        private readonly IConfiguration _config;
 
-        public PermissionController(IPermissionBiz permissionBiz, IRolePermissionBiz rolePermissionBiz)
+        public PermissionController(IPermissionBiz permissionBiz,
+            IRolePermissionBiz rolePermissionBiz,
+            IConfiguration config)
         {
             _permissionBiz = permissionBiz;
             _rolePermissionBiz = rolePermissionBiz;
+            _config = config;
         }
 
         /// <summary>
@@ -27,9 +32,35 @@ namespace AuthService.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var permissions = await _permissionBiz.PermissionRepository.Query()
+            var appId = this.GetAppIdFromToken();
+
+            if (this.IsGlobalAdminApp())
+            {
+                // Return all permissions
+                var allPermissions = await _permissionBiz.PermissionRepository.Query()
+                    .AsNoTracking()
+                    .Select(p => new PermissionListItemDto
+                    {
+                        PermissionId = p.PermissionId,
+                        PermissionName = p.PermissionName,
+                        IsSystemDefined = p.IsSystemDefined
+                    })
+                    .ToListAsync();
+
+                return Ok(allPermissions);
+            }
+
+            // Filter permissions by roles in this app
+            var permissionIds = await _rolePermissionBiz.RolePermissionRepository.Query()
+                .Where(rp => rp.Role.AppId == appId)
+                .Select(rp => rp.PermissionId)
+                .Distinct()
+                .ToListAsync();
+
+            var scopedPermissions = await _permissionBiz.PermissionRepository.Query()
+                .Where(p => permissionIds.Contains(p.PermissionId))
                 .AsNoTracking()
-                .Select(p => new PermissionDto
+                .Select(p => new PermissionListItemDto
                 {
                     PermissionId = p.PermissionId,
                     PermissionName = p.PermissionName,
@@ -37,7 +68,7 @@ namespace AuthService.API.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(permissions);
+            return Ok(scopedPermissions);
         }
 
         /// <summary>
@@ -46,16 +77,32 @@ namespace AuthService.API.Controllers
         [HttpGet("{permissionId:guid}")]
         public async Task<IActionResult> GetById(Guid permissionId)
         {
-            var permission = await _permissionBiz.PermissionRepository.GetByIdAsync(permissionId);
+            var appId = this.GetAppIdFromToken();
+
+            var permission = await _permissionBiz.PermissionRepository.Query()
+                .Include(p => p.RolePermissions)
+                    .ThenInclude(rp => rp.Role)
+                .FirstOrDefaultAsync(p => p.PermissionId == permissionId);
 
             if (permission == null)
                 return NotFound(new { message = "Permission not found." });
+
+            if (!this.IsGlobalAdminApp() && !permission.RolePermissions.Any(rp => rp.Role.AppId == appId))
+                return Forbid("You are not authorized to access this permission.");
 
             return Ok(new PermissionDto
             {
                 PermissionId = permission.PermissionId,
                 PermissionName = permission.PermissionName,
-                IsSystemDefined = permission.IsSystemDefined
+                IsSystemDefined = permission.IsSystemDefined,
+                RoleId = permission.RolePermissions
+                            .Where(rp => rp.Role.AppId == appId)
+                            .Select(rp => rp.Role.RoleId)
+                            .FirstOrDefault(),
+                RoleName = permission.RolePermissions
+                            .Where(rp => rp.Role.AppId == appId)
+                            .Select(rp => rp.Role.RoleName)
+                            .FirstOrDefault()
             });
         }
 
@@ -77,17 +124,30 @@ namespace AuthService.API.Controllers
             {
                 PermissionId = Guid.NewGuid(),
                 PermissionName = dto.PermissionName,
-                IsSystemDefined = false
+                IsSystemDefined = false,
             };
 
             await _permissionBiz.PermissionRepository.AddAsync(permission);
+            await _permissionBiz.SaveChangesAsync();
+
+            await _permissionBiz.RolePermissionRepository.AddAsync(new RolePermission
+            {
+                RolePermissionId = Guid.NewGuid(),
+                RoleId = dto.RoleId,
+                PermissionId = permission.PermissionId
+            });
             await _permissionBiz.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetById), new { permissionId = permission.PermissionId }, new PermissionDto
             {
                 PermissionId = permission.PermissionId,
                 PermissionName = permission.PermissionName,
-                IsSystemDefined = permission.IsSystemDefined
+                IsSystemDefined = permission.IsSystemDefined,
+                RoleId = dto.RoleId,
+                RoleName = _rolePermissionBiz.RoleRepository.Query()
+                            .Where(r => r.RoleId == dto.RoleId)
+                            .Select(r => r.RoleName)
+                            .FirstOrDefault()
             });
         }
 
@@ -100,12 +160,21 @@ namespace AuthService.API.Controllers
             if (dto is null)
                 return BadRequest();
 
-            var permission = await _permissionBiz.PermissionRepository.GetByIdAsync(permissionId);
+            var appId = this.GetAppIdFromToken();
+
+            var permission = await _permissionBiz.PermissionRepository.Query()
+                .Include(p => p.RolePermissions)
+                    .ThenInclude(rp => rp.Role)
+                .FirstOrDefaultAsync(p => p.PermissionId == permissionId);
+
             if (permission == null)
                 return NotFound(new { message = "Permission not found." });
 
             if (permission.IsSystemDefined)
                 return BadRequest(new { message = "Cannot modify system-defined permission." });
+
+            if (!this.IsGlobalAdminApp() && !permission.RolePermissions.Any(rp => rp.Role.AppId == appId))
+                return Forbid("You are not authorized to update this permission.");
 
             if (!string.IsNullOrWhiteSpace(dto.PermissionName))
                 permission.PermissionName = dto.PermissionName;
@@ -113,7 +182,7 @@ namespace AuthService.API.Controllers
             _permissionBiz.PermissionRepository.Update(permission);
             await _permissionBiz.SaveChangesAsync();
 
-            return Ok(new PermissionDto
+            return Ok(new PermissionListItemDto
             {
                 PermissionId = permission.PermissionId,
                 PermissionName = permission.PermissionName,
@@ -127,22 +196,37 @@ namespace AuthService.API.Controllers
         [HttpDelete("{permissionId:guid}")]
         public async Task<IActionResult> Delete(Guid permissionId)
         {
-            var permission = await _permissionBiz.PermissionRepository.GetByIdAsync(permissionId);
+            var appId = this.GetAppIdFromToken();
+
+            var permission = await _permissionBiz.PermissionRepository.Query()
+                .Include(p => p.RolePermissions)
+                    .ThenInclude(rp => rp.Role)
+                .FirstOrDefaultAsync(p => p.PermissionId == permissionId);
+
             if (permission == null)
                 return NotFound(new { message = "Permission not found." });
 
             if (permission.IsSystemDefined)
                 return BadRequest(new { message = "Cannot delete system-defined permission." });
 
-            var hasAssignments = await _rolePermissionBiz.RolePermissionRepository.Query()
-                .AnyAsync(rp => rp.PermissionId == permissionId);
-            if (hasAssignments)
-                return BadRequest(new { message = "Cannot delete permission with active assignments." });
+            if (!this.IsGlobalAdminApp() && !permission.RolePermissions.Any(rp => rp.Role.AppId == appId))
+                return Forbid("You are not authorized to delete this permission.");
 
+            // Step 1: Delete all RolePermission links
+            if (permission.RolePermissions.Any())
+            {
+                foreach (var rp in permission.RolePermissions.ToList())
+                {
+                    _rolePermissionBiz.RolePermissionRepository.Remove(rp);
+                }
+                await _rolePermissionBiz.SaveChangesAsync();
+            }
+
+            // Step 2: Delete the permission itself
             _permissionBiz.PermissionRepository.Remove(permission);
             await _permissionBiz.SaveChangesAsync();
-
             return NoContent();
         }
+
     }
 }
