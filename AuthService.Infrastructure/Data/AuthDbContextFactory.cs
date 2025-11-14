@@ -19,7 +19,7 @@ namespace AuthService.Infrastructure.Data
 
             optionsBuilder.UseSqlServer(connectionString);
 
-            return new AuthDbContext(optionsBuilder.Options);
+            return new AuthDbContext(optionsBuilder.Options, configuration);
         }
     }
 }

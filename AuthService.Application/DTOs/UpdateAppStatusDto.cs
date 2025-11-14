@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace AuthService.Application.DTOs
 {
-    public class AssignUserRoleDto
+    public class UpdateAppStatusDto
     {
         public Guid UserId { get; set; }
         public Guid AppId { get; set; }
-        public Guid RoleId { get; set; }
+        public string NewStatus { get; set; }
     }
 
 }

@@ -1,17 +1,35 @@
 using AuthService.API.Middlewares;
+using AuthService.Domain.Configs;
 using AuthService.Domain.Entities;
 using AuthService.Infrastructure.Data;
+using AuthService.Infrastructure.DependencyInjection;
+using AuthService.Application.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add CORS policy
+builder.WebHost.UseUrls("http://*:8080"); //Docker compatibility 
+//builder.WebHost.UseUrls("https://localhost:7065", "http://localhost:5021"); //local development 
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactDashboard", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") //React dev server
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -34,10 +52,76 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+var initConfig = builder.Configuration.GetSection("Init").Get<InitConfig>();
+builder.Services.AddSingleton(initConfig);
+
+builder.Services.AddAuthorization(options =>
+{
+    var perms = initConfig.Permissions;
+
+    options.AddPolicy("CanManageAssigns", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var raw = context.User.FindFirst("permissions")?.Value;
+            var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
+            return perms.Contains("SuperAccess") 
+            || perms.Contains("ManageAssigns");
+        }));
+
+    options.AddPolicy("CanManageApps", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var raw = context.User.FindFirst("permissions")?.Value;
+            var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
+            return perms.Contains("SuperAccess") 
+            || perms.Contains("ManageApps");
+        }));
+
+    options.AddPolicy("CanManageUsers", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var raw = context.User.FindFirst("permissions")?.Value;
+            var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
+            return perms.Contains("SuperAccess") 
+            || perms.Contains("ManageUsers");
+        }));
+
+    options.AddPolicy("CanManageRoles", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var raw = context.User.FindFirst("permissions")?.Value;
+            var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
+            return perms.Contains("SuperAccess") 
+            || perms.Contains("ManageRoles");
+        }));
+
+    options.AddPolicy("CanManagePermissions", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var raw = context.User.FindFirst("permissions")?.Value;
+            var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
+            return perms.Contains("SuperAccess") 
+            || perms.Contains("ManagePermissions");
+        }));
+});
+
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = true;
+});
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<AuthDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register repos
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -63,7 +147,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -72,6 +155,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowReactDashboard"); //Apply the policy
+
+app.UseRouting();
 
 app.UseAuthentication();
 

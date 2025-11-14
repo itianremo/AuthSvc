@@ -10,6 +10,6 @@ namespace AuthService.Application.DTOs
     {
         public Guid UserId { get; set; }
         public Guid AppId { get; set; }
-        public string Status { get; set; } // "blocked", "active", etc.
+        public string NewStatus { get; set; } // "blocked", "active", etc.
     }
 }

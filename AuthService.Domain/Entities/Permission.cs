@@ -12,6 +12,14 @@ namespace AuthService.Domain.Entities
         public string PermissionName { get; set; }
 
         public ICollection<RolePermission> RolePermissions { get; set; }
+
+        public bool IsSystemDefined { get; set; } = false;
+
+        public Permission()
+        {
+            RolePermissions = new HashSet<RolePermission>();
+        }
+
     }
 
 }

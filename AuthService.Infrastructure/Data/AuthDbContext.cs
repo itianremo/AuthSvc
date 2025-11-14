@@ -1,5 +1,7 @@
-﻿using AuthService.Domain.Entities;
+﻿using AuthService.Domain.Configs;
+using AuthService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +12,13 @@ namespace AuthService.Infrastructure.Data
 {
     public class AuthDbContext : DbContext
     {
-        public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
+        private readonly IConfiguration _configuration;
+
+        public AuthDbContext(DbContextOptions<AuthDbContext> options, IConfiguration configuration)
+            : base(options)
+        {
+            _configuration = configuration;
+        }
 
         public DbSet<User> Users { get; set; }
         public DbSet<App> Apps { get; set; }
@@ -48,49 +56,177 @@ namespace AuthService.Infrastructure.Data
                 .HasForeignKey(ur => ur.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.App)
-                .WithMany(a => a.UserRoles)
-                .HasForeignKey(ur => ur.AppId)
-                .OnDelete(DeleteBehavior.Restrict);
+            //modelBuilder.Entity<UserRole>()
+            //    .HasOne(ur => ur.App)
+            //    .WithMany(a => a.UserRoles)
+            //    .HasForeignKey(ur => ur.AppId)
+            //    .OnDelete(DeleteBehavior.Restrict);
 
             // === Seed Data ===
-            #region Seed Data
-            var appId = Guid.Parse("28db6987-8066-438e-bb3c-53c6b6515c6c");
+            #region Seed Admin
+            var seeds = _configuration.GetSection("Init:Seeds");
+            var permissions = _configuration.GetSection("Init:Permissions");
 
-            var roleAdmin = Guid.Parse("d3f4a1b2-9c8e-4a6f-8f2a-123456789abc");
-            var roleEditor = Guid.Parse("a1b2c3d4-5678-90ab-cdef-112233445566");
+            // App
+            var appId = Guid.Parse(seeds["appId"]);
+            var appName = seeds["appName"];
+            var appRedirectUrls = seeds["appRedirectUrls"];
+            var appScopes = seeds["appScopes"];
+            // Roles
+            var roleId = Guid.Parse(seeds["roleId"]);
+            var roleName = seeds["roleName"];
+            // Admin User
+            var userId = Guid.Parse(seeds["userId"]);
+            var userEmail = seeds["userEmail"];
+            var userPhoneNumber = seeds["userPhoneNumber"];
+            var userPasswordHash = seeds["userPasswordHash"];
+            var userGlobalAccountStatus = seeds["userGlobalAccountStatus"];
+            var userIsEmailVerified = seeds["userIsEmailVerified"];
+            var userIsPhoneVerified = seeds["userIsPhoneVerified"];
+            var userCreatedAt = new DateTime(2024, 1, 1);
+            //User App Access
+            var adminUserAppId = Guid.Parse(seeds["adminUserAppId"]);
+            //User Role Assignment
+            var adminUserRoleId = Guid.Parse(seeds["adminUserRoleId"]);
+            // Permission
+            var permissionId = Guid.Parse(seeds["permissionId"]);
+            var permissionName = seeds["permissionName"];
+            // Permission Role assignment
+            var rolePermissionId = Guid.Parse(seeds["rolePermissionId"]);
 
-            var permCreate = Guid.Parse("11111111-aaaa-bbbb-cccc-111111111111");
-            var permEdit = Guid.Parse("22222222-aaaa-bbbb-cccc-222222222222");
-            var permDelete = Guid.Parse("33333333-aaaa-bbbb-cccc-333333333333");
-
-            var rp1 = Guid.Parse("e1a1f8d2-3b4c-4f6a-9a7b-1c2d3e4f5a6b");
-            var rp2 = Guid.Parse("f2b2e9c3-4d5e-5a7b-8c9d-2e3f4a5b6c7d");
-            var rp3 = Guid.Parse("a3c3d0e4-5f6a-6b8c-9d0e-3f4a5b6c7d8e");
-            var rp4 = Guid.Parse("b4d4e1f5-6a7b-7c9d-0e1f-4a5b6c7d8e9f");
-            var rp5 = Guid.Parse("c5e5f2a6-7b8c-8d0e-1f2a-5b6c7d8e9f0a");
-
+            // Apps
+            modelBuilder.Entity<App>().HasData(
+                new App
+                {
+                    AppId = appId,
+                    AppName = appName,
+                    RedirectUrls = appRedirectUrls,
+                    Scopes = appScopes,
+                    AutoApproveUsers = false,
+                    IsCoreApp = true
+                });
+            // Roles
             modelBuilder.Entity<Role>().HasData(
-                new Role { RoleId = roleAdmin, RoleName = "Admin", AppId = appId },
-                new Role { RoleId = roleEditor, RoleName = "Editor", AppId = appId }
-            );
-
+                new Role
+                {
+                    RoleId = roleId,
+                    RoleName = roleName,
+                    AppId = appId,
+                    IsSystemDefined = true
+                });
+            // Admin User
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    UserId = userId,
+                    Email = userEmail,
+                    PhoneNumber = userPhoneNumber,
+                    HashedPassword = userPasswordHash,
+                    CreatedAt = userCreatedAt,
+                    IsEmailVerified = bool.Parse(userIsEmailVerified),
+                    IsPhoneVerified = bool.Parse(userIsPhoneVerified),
+                    GlobalAccountStatus = userGlobalAccountStatus
+                });
+            // Admin's App Access
+            modelBuilder.Entity<UserApp>().HasData(
+                new UserApp
+                {
+                    UserAppId = adminUserAppId,
+                    UserId = userId,
+                    AppId = appId,
+                    AccountStatus = userGlobalAccountStatus,
+                    RefreshToken = string.Empty,
+                    CreatedAt = userCreatedAt
+                });
+            // Admin's Role Assignment
+            modelBuilder.Entity<UserRole>().HasData(
+                new UserRole
+                {
+                    UserRoleId = adminUserRoleId,
+                    UserId = userId,
+                    //AppId = appId,
+                    RoleId = roleId
+                });
+            //Admin's Pemission Assignment
             modelBuilder.Entity<Permission>().HasData(
-                new Permission { PermissionId = permCreate, PermissionName = "Create" },
-                new Permission { PermissionId = permEdit, PermissionName = "Edit" },
-                new Permission { PermissionId = permDelete, PermissionName = "Delete" }
+                new Permission
+                {
+                    PermissionId = permissionId,
+                    PermissionName = permissionName,
+                    IsSystemDefined = true
+                }
             );
-
+            // Link Permission to Role
             modelBuilder.Entity<RolePermission>().HasData(
-                // Admin gets all
-                new RolePermission { RolePermissionId = rp1, RoleId = roleAdmin, PermissionId = permCreate },
-                new RolePermission { RolePermissionId = rp2, RoleId = roleAdmin, PermissionId = permEdit },
-                new RolePermission { RolePermissionId = rp3, RoleId = roleAdmin, PermissionId = permDelete },
+                new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionId = permissionId,
+                    RolePermissionId = rolePermissionId
+                }
+            );
+            #endregion
 
-                // Editor gets Create + Edit
-                new RolePermission { RolePermissionId = rp4, RoleId = roleEditor, PermissionId = permCreate },
-                new RolePermission { RolePermissionId = rp5, RoleId = roleEditor, PermissionId = permEdit }
+            #region Seed init permissions
+            // Permission : CanManageApps
+            var permIdManageApps = Guid.Parse(permissions["permIdManageApps"]);
+            var permNameManageApps = permissions["permNameManageApps"];
+            //Admin's Pemission Assignment
+            modelBuilder.Entity<Permission>().HasData(
+                new Permission
+                {
+                    PermissionId = permIdManageApps,
+                    PermissionName = permNameManageApps,
+                    IsSystemDefined = true
+                }
+            );
+            // Permission : CanManageUsers
+            var permIdManageUsers = Guid.Parse(permissions["permIdManageUsers"]);
+            var permNameManageUsers = permissions["permNameManageUsers"];
+            //Admin's Pemission Assignment
+            modelBuilder.Entity<Permission>().HasData(
+                new Permission
+                {
+                    PermissionId = permIdManageUsers,
+                    PermissionName = permNameManageUsers,
+                    IsSystemDefined = true
+                }
+            );
+            // Permission : CanManageRoles
+            var permIdManageRoles = Guid.Parse(permissions["permIdManageRoles"]);
+            var permNameManageRoles = permissions["permNameManageRoles"];
+            //Admin's Pemission Assignment
+            modelBuilder.Entity<Permission>().HasData(
+                new Permission
+                {
+                    PermissionId = permIdManageRoles,
+                    PermissionName = permNameManageRoles,
+                    IsSystemDefined = true
+                }
+            );
+            // Permission : CanManagePermissions
+            var permIdManagePermissions = Guid.Parse(permissions["permIdManagePermissions"]);
+            var permNameManagePermissions = permissions["permNameManagePermissions"];
+            //Admin's Pemission Assignment
+            modelBuilder.Entity<Permission>().HasData(
+                new Permission
+                {
+                    PermissionId = permIdManagePermissions,
+                    PermissionName = permNameManagePermissions,
+                    IsSystemDefined = true
+                }
+            );
+            // Permission : CanManageAssigns
+            var permIdManageAssigns = Guid.Parse(permissions["permIdManageAssigns"]);
+            var permNameManageAssigns = permissions["permNameManageAssigns"];
+            //Admin's Pemission Assignment
+            modelBuilder.Entity<Permission>().HasData(
+                new Permission
+                {
+                    PermissionId = permIdManageAssigns,
+                    PermissionName = permNameManageAssigns,
+                    IsSystemDefined = true
+                }
             );
             #endregion
         }

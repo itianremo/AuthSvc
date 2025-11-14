@@ -10,12 +10,13 @@ namespace AuthService.Domain.Entities
     {
         public Guid UserRoleId { get; set; }
         public Guid UserId { get; set; }
-        public Guid AppId { get; set; }
+        //public Guid AppId { get; set; }
         public Guid RoleId { get; set; }
 
         public User User { get; set; }
-        public App App { get; set; }
+        //public App App { get; set; }
         public Role Role { get; set; }
+         
     }
 
 }

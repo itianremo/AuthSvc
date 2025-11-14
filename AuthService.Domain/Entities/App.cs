@@ -15,10 +15,21 @@ namespace AuthService.Domain.Entities
         public string AppName { get; set; }
         public string RedirectUrls { get; set; }
         public string Scopes { get; set; }
+        public bool AutoApproveUsers { get; set; } = false;
 
         public ICollection<UserApp> UserApps { get; set; }
         public ICollection<Role> Roles { get; set; }
         public ICollection<UserRole> UserRoles { get; set; }
+
+        public bool IsCoreApp { get; set; } = false;
+
+        public App()
+        {
+            UserApps = new List<UserApp>();
+            Roles = new List<Role>();
+            UserRoles = new List<UserRole>();
+
+        }
     }
 
 }

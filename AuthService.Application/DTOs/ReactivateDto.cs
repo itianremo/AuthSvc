@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace AuthService.Application.DTOs
 {
-    public class CreatePermissionDto
+    public class ReactivateDto
     {
-        public string PermissionName { get; set; }
+        public Guid UserId { get; set; }
+        public string Otp { get; set; }
     }
 
 }

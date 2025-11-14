@@ -32,6 +32,12 @@ namespace AuthService.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("AutoApproveUsers")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsCoreApp")
+                        .HasColumnType("bit");
+
                     b.Property<string>("RedirectUrls")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -43,6 +49,17 @@ namespace AuthService.Infrastructure.Migrations
                     b.HasKey("AppId");
 
                     b.ToTable("Apps");
+
+                    b.HasData(
+                        new
+                        {
+                            AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
+                            AppName = "GlobalAdminApp",
+                            AutoApproveUsers = false,
+                            IsCoreApp = true,
+                            RedirectUrls = "http://localhost:3000/auth/callback",
+                            Scopes = "openid profile email admin"
+                        });
                 });
 
             modelBuilder.Entity("AuthService.Domain.Entities.Permission", b =>
@@ -50,6 +67,9 @@ namespace AuthService.Infrastructure.Migrations
                     b.Property<Guid>("PermissionId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsSystemDefined")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PermissionName")
                         .IsRequired()
@@ -62,18 +82,39 @@ namespace AuthService.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            PermissionId = new Guid("11111111-aaaa-bbbb-cccc-111111111111"),
-                            PermissionName = "Create"
+                            PermissionId = new Guid("9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"),
+                            IsSystemDefined = true,
+                            PermissionName = "SuperAccess"
                         },
                         new
                         {
-                            PermissionId = new Guid("22222222-aaaa-bbbb-cccc-222222222222"),
-                            PermissionName = "Edit"
+                            PermissionId = new Guid("f3b2c1d4-8e9a-4f2b-9c1d-7a6e5b4c3d2a"),
+                            IsSystemDefined = true,
+                            PermissionName = "ManageApps"
                         },
                         new
                         {
-                            PermissionId = new Guid("33333333-aaaa-bbbb-cccc-333333333333"),
-                            PermissionName = "Delete"
+                            PermissionId = new Guid("1c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f"),
+                            IsSystemDefined = true,
+                            PermissionName = "ManageUsers"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("9a7f6e5d-4c3b-2a1f-8e9d-0f1e2d3c4b5a"),
+                            IsSystemDefined = true,
+                            PermissionName = "ManageRoles"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-e5f6-7890-abcd-1234567890ef"),
+                            IsSystemDefined = true,
+                            PermissionName = "ManagePermissions"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("0f1e2d3c-4b5a-6978-8e9d-abcdef123456"),
+                            IsSystemDefined = true,
+                            PermissionName = "ManageAssigns"
                         });
                 });
 
@@ -85,6 +126,9 @@ namespace AuthService.Infrastructure.Migrations
 
                     b.Property<Guid>("AppId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsSystemDefined")
+                        .HasColumnType("bit");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
@@ -99,15 +143,10 @@ namespace AuthService.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            RoleId = new Guid("d3f4a1b2-9c8e-4a6f-8f2a-123456789abc"),
-                            AppId = new Guid("28db6987-8066-438e-bb3c-53c6b6515c6c"),
+                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
+                            AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
+                            IsSystemDefined = true,
                             RoleName = "Admin"
-                        },
-                        new
-                        {
-                            RoleId = new Guid("a1b2c3d4-5678-90ab-cdef-112233445566"),
-                            AppId = new Guid("28db6987-8066-438e-bb3c-53c6b6515c6c"),
-                            RoleName = "Editor"
                         });
                 });
 
@@ -131,33 +170,9 @@ namespace AuthService.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            RoleId = new Guid("d3f4a1b2-9c8e-4a6f-8f2a-123456789abc"),
-                            PermissionId = new Guid("11111111-aaaa-bbbb-cccc-111111111111"),
-                            RolePermissionId = new Guid("e1a1f8d2-3b4c-4f6a-9a7b-1c2d3e4f5a6b")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("d3f4a1b2-9c8e-4a6f-8f2a-123456789abc"),
-                            PermissionId = new Guid("22222222-aaaa-bbbb-cccc-222222222222"),
-                            RolePermissionId = new Guid("f2b2e9c3-4d5e-5a7b-8c9d-2e3f4a5b6c7d")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("d3f4a1b2-9c8e-4a6f-8f2a-123456789abc"),
-                            PermissionId = new Guid("33333333-aaaa-bbbb-cccc-333333333333"),
-                            RolePermissionId = new Guid("a3c3d0e4-5f6a-6b8c-9d0e-3f4a5b6c7d8e")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("a1b2c3d4-5678-90ab-cdef-112233445566"),
-                            PermissionId = new Guid("11111111-aaaa-bbbb-cccc-111111111111"),
-                            RolePermissionId = new Guid("b4d4e1f5-6a7b-7c9d-0e1f-4a5b6c7d8e9f")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("a1b2c3d4-5678-90ab-cdef-112233445566"),
-                            PermissionId = new Guid("22222222-aaaa-bbbb-cccc-222222222222"),
-                            RolePermissionId = new Guid("c5e5f2a6-7b8c-8d0e-1f2a-5b6c7d8e9f0a")
+                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
+                            PermissionId = new Guid("9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"),
+                            RolePermissionId = new Guid("0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d")
                         });
                 });
 
@@ -183,6 +198,9 @@ namespace AuthService.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsEmailVerified")
                         .HasColumnType("bit");
 
@@ -203,6 +221,20 @@ namespace AuthService.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@authsvc.local",
+                            GlobalAccountStatus = "active",
+                            HashedPassword = "AQAAAAIAAYagAAAAEOs3vT6YZ5lIVhQRS7xFq17KvA/u2g7qv+9s0MH2FXyXdvsHLg0rMqwL9KeGKXOvdw==",
+                            IsDeleted = false,
+                            IsEmailVerified = true,
+                            IsPhoneVerified = true,
+                            PhoneNumber = "+201144664441"
+                        });
                 });
 
             modelBuilder.Entity("AuthService.Domain.Entities.UserApp", b =>
@@ -238,6 +270,17 @@ namespace AuthService.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserApps");
+
+                    b.HasData(
+                        new
+                        {
+                            UserAppId = new Guid("7d8e9f0a-1b2c-3d4e-5f6a-7b8c9d0e1f2a"),
+                            AccountStatus = "active",
+                            AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            RefreshToken = "",
+                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f")
+                        });
                 });
 
             modelBuilder.Entity("AuthService.Domain.Entities.UserAppStatus", b =>
@@ -269,7 +312,7 @@ namespace AuthService.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AppId")
+                    b.Property<Guid?>("AppId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RoleId")
@@ -287,6 +330,14 @@ namespace AuthService.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserRoleId = new Guid("8e9f0a1b-2c3d-4e5f-6a7b-8c9d0e1f2a3b"),
+                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
+                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f")
+                        });
                 });
 
             modelBuilder.Entity("AuthService.Domain.Entities.Role", b =>
@@ -351,11 +402,9 @@ namespace AuthService.Infrastructure.Migrations
 
             modelBuilder.Entity("AuthService.Domain.Entities.UserRole", b =>
                 {
-                    b.HasOne("AuthService.Domain.Entities.App", "App")
+                    b.HasOne("AuthService.Domain.Entities.App", null)
                         .WithMany("UserRoles")
-                        .HasForeignKey("AppId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("AppId");
 
                     b.HasOne("AuthService.Domain.Entities.Role", "Role")
                         .WithMany("UserRoles")
@@ -368,8 +417,6 @@ namespace AuthService.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("App");
 
                     b.Navigation("Role");
 
