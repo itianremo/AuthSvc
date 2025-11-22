@@ -11,16 +11,19 @@ namespace AuthService.Application.DependencyInjection
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             // Biz services
-            services.AddScoped(typeof(IBiz<>), typeof(Biz<>));
-            services.AddScoped<IUserBiz, UserBiz>();
+            //services.AddScoped(typeof(IBiz<>), typeof(Biz<>));
+
             services.AddScoped<IAppBiz, AppBiz>();
-            services.AddScoped<IRoleBiz, RoleBiz>();
+            services.AddScoped<IDashboardBiz, DashboardBiz>();
+            //services.AddScoped(INotificationBiz, NotificationBizMock);
+            services.AddScoped<IPasswordResetTokenBiz, PasswordResetTokenBiz>();
             services.AddScoped<IPermissionBiz, PermissionBiz>();
-            services.AddScoped<IUserAppBiz, UserAppBiz>();
-            services.AddScoped<IUserRoleBiz, UserRoleBiz>();
+            services.AddScoped<IRoleBiz, RoleBiz>();
             services.AddScoped<IRolePermissionBiz, RolePermissionBiz>();
-            services.AddScoped<IUserAppStatusBiz, UserAppStatusBiz>();
-            services.AddScoped<IPasswordResetBiz, PasswordResetBiz>();
+            services.AddScoped<UserAppStatusBiz, UserAppStatusBiz>();
+            services.AddScoped<IUserBiz, UserBiz>();
+            services.AddScoped<IUserRoleBiz, UserRoleBiz>();
+            services.AddScoped<INotificationBiz, NotificationBizMock>();
 
             // Identity helpers / configuration used by application logic
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

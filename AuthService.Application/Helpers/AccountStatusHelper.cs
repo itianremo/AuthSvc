@@ -1,44 +1,45 @@
 ﻿using AuthService.Application.DTOs;
+using AuthService.Domain.Configs;
 using AuthService.Domain.Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AuthService.Application.Helpers
 {
     public static class AccountStatusHelper
     {
-        public static string GetGlobalStatus(User user)
+        public static AppAccountStatus GetAppStatus(User user, Guid appId)
         {
+            if (user.IsDeleted)
+                return AppAccountStatus.Deleted;
+
             if (!user.IsEmailVerified)
-                return "email-verification-needed";
+                return AppAccountStatus.NeedEmailVerify;
+
             if (!user.IsPhoneVerified)
-                return "phone-verification-needed";
-            return user.GlobalAccountStatus;
+                return AppAccountStatus.NeedPhoneVerify;
+
+            var appStatus = user.AppStatuses.FirstOrDefault(s => s.AppId == appId);
+            return appStatus?.Status ?? AppAccountStatus.Pending;
         }
     }
 
     public static class StatusHelper
     {
-        public static bool IsLoginAllowed(string status)
+        public static bool IsLoginAllowed(AppAccountStatus status)
         {
-            return status == AccountStatus.Active
-                || status == AccountStatus.Approved;
+            return status == AppAccountStatus.Active
+                || status == AppAccountStatus.Approved;
         }
 
-        public static string GetDisplayStatus(User user, App app)
+        public static AppAccountStatus GetDisplayStatus(User user, Guid appId)
         {
-            if (user.IsDeleted) return AccountStatus.Deleted;
-            if (!user.IsEmailVerified) return AccountStatus.NeedEmailVerify;
-            if (!user.IsPhoneVerified) return AccountStatus.NeedPhoneVerify;
+            if (user.IsDeleted) return AppAccountStatus.Deleted;
+            if (!user.IsEmailVerified) return AppAccountStatus.NeedEmailVerify;
+            if (!user.IsPhoneVerified) return AppAccountStatus.NeedPhoneVerify;
 
-
-
-            return user.GlobalAccountStatus.ToString();
+            var appStatus = user.AppStatuses.FirstOrDefault(s => s.AppId == appId);
+            return appStatus?.Status ?? AppAccountStatus.Pending;
         }
     }
-
-
 }

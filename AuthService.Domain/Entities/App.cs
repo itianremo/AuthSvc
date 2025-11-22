@@ -10,24 +10,21 @@ namespace AuthService.Domain.Entities
 {
     public class App
     {
-        public Guid AppId { get; set; }
+        public Guid AppId { get; set; } = Guid.NewGuid();
         [Required]
         public string AppName { get; set; }
         public string RedirectUrls { get; set; }
         public string Scopes { get; set; }
         public bool AutoApproveUsers { get; set; } = false;
-
-        public ICollection<UserApp> UserApps { get; set; }
-        public ICollection<Role> Roles { get; set; }
-        public ICollection<UserRole> UserRoles { get; set; }
-
         public bool IsCoreApp { get; set; } = false;
+
+        public ICollection<UserAppStatus> UserStatuses { get; set; }
+        public ICollection<Role> Roles { get; set; }
 
         public App()
         {
-            UserApps = new List<UserApp>();
+            UserStatuses = new List<UserAppStatus>();
             Roles = new List<Role>();
-            UserRoles = new List<UserRole>();
 
         }
     }

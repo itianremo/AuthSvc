@@ -9,10 +9,10 @@ namespace AuthService.Domain.Entities
     public class PasswordResetToken
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public Guid UserId { get; set; }
-        public string Token { get; set; }
+        public string Token { get; set; } = string.Empty;
         public DateTime Expiry { get; set; }
 
+        public Guid UserId { get; set; } = Guid.NewGuid();
         public User User { get; set; }
     }
 }

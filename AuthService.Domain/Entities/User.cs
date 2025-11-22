@@ -11,7 +11,7 @@ namespace AuthService.Domain.Entities
 
     public class User
     {
-        public Guid UserId { get; set; }
+        public Guid UserId { get; set; } = Guid.NewGuid();
         [Required, MaxLength(256)]
         public string Email { get; set; }
         [Required, MaxLength(20)]
@@ -19,42 +19,39 @@ namespace AuthService.Domain.Entities
         [Required]
         public string HashedPassword { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        public ICollection<UserApp> UserApps { get; set; }
-        public ICollection<UserRole> UserRoles { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public bool IsEmailVerified { get; set; }
         public bool IsPhoneVerified { get; set; }
-
-        public string GlobalAccountStatus { get; set; } // e.g., "active", "blocked", "email-verification-needed"
-
+        public bool IsDeleted { get; set; } = false;
+        
+        public ICollection<Role> Roles { get; set; }
         public ICollection<UserAppStatus> AppStatuses { get; set; } // Per-app status
 
-        public bool IsDeleted { get; set; } = false;
+        //public string GlobalAccountStatus { get; set; } // e.g., "active", "blocked", "email-verification-needed"
 
-        [NotMapped]
-        public string Status
-        {
-            get
-            {
-                if (IsDeleted)
-                    return "Deleted";
-                if (GlobalAccountStatus == "suspended")
-                    return "Suspended";
-                if (!IsEmailVerified)
-                    return "Need Email Verify";
-                if (!IsPhoneVerified)
-                    return "Need Phone Verify";
-                if (GlobalAccountStatus == "pending")
-                    return "Pending";
-                return GlobalAccountStatus ?? "N/A";
-            }
-        }
+        //[NotMapped]
+        //public string Status
+        //{
+        //    get
+        //    {
+        //        if (IsDeleted)
+        //            return "Deleted";
+        //        if (GlobalAccountStatus == "suspended")
+        //            return "Suspended";
+        //        if (!IsEmailVerified)
+        //            return "Need Email Verify";
+        //        if (!IsPhoneVerified)
+        //            return "Need Phone Verify";
+        //        if (GlobalAccountStatus == "pending")
+        //            return "Pending";
+        //        return GlobalAccountStatus ?? "N/A";
+        //    }
+        //}
 
         public User()
         {
-            UserApps = new List<UserApp>();
-            UserRoles = new List<UserRole>();
-            AppStatuses = new List<UserAppStatus>();
+            Roles = new HashSet<Role>();
+            AppStatuses = new HashSet<UserAppStatus>();
         }
     }
 }

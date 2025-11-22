@@ -1,5 +1,6 @@
-﻿using AuthService.Application.Helpers;
-using AuthService.Infrastructure.Data;
+﻿using AuthService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace AuthService.API.Middlewares
@@ -15,18 +16,24 @@ namespace AuthService.API.Middlewares
 
         public async Task InvokeAsync(HttpContext context, AuthDbContext db)
         {
-            //var userIdClaim = context.User.FindFirst("sub")?.Value;
-            var userIdClaim = context.User.FindFirst("user_id")?.Value
-                   ?? context.User.FindFirst("sub")?.Value
-                   ?? context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                              ?? context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (Guid.TryParse(userIdClaim, out var userId))
+            var appIdClaim = context.User.FindFirst("AppId")?.Value;
+
+            if (Guid.TryParse(userIdClaim, out var userId) && Guid.TryParse(appIdClaim, out var appId))
             {
-                var user = await db.Users.FindAsync(userId);
+                var user = await db.Users
+                    .Include(u => u.AppStatuses)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+
                 if (user != null)
                 {
-                    user.GlobalAccountStatus = AccountStatusHelper.GetGlobalStatus(user);
-                    await db.SaveChangesAsync();
+                    var status = user.AppStatuses.FirstOrDefault(s => s.AppId == appId)?.Status;
+                    if (!string.IsNullOrEmpty(status.ToString()))
+                    {
+                        context.Items["AccountStatus"] = status;
+                    }
                 }
             }
 

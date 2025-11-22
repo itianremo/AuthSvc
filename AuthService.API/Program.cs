@@ -15,14 +15,14 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add CORS policy
-builder.WebHost.UseUrls("http://*:8080"); //Docker compatibility 
+builder.WebHost.UseUrls("http://*:8080"); //Docker compatibility
 //builder.WebHost.UseUrls("https://localhost:7065", "http://localhost:5021"); //local development 
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactDashboard", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") //React dev server
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -31,11 +31,9 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-//swagger config
 
-//builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+// Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -52,6 +50,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Bind InitConfig from appsettings.json
+builder.Services.Configure<InitConfig>(builder.Configuration.GetSection("Init"));
+
+// Authorization policies
 var initConfig = builder.Configuration.GetSection("Init").Get<InitConfig>();
 builder.Services.AddSingleton(initConfig);
 
@@ -64,8 +66,7 @@ builder.Services.AddAuthorization(options =>
         {
             var raw = context.User.FindFirst("permissions")?.Value;
             var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
-            return perms.Contains("SuperAccess") 
-            || perms.Contains("ManageAssigns");
+            return perms.Contains("SuperAccess") || perms.Contains("ManageAssigns");
         }));
 
     options.AddPolicy("CanManageApps", policy =>
@@ -73,8 +74,7 @@ builder.Services.AddAuthorization(options =>
         {
             var raw = context.User.FindFirst("permissions")?.Value;
             var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
-            return perms.Contains("SuperAccess") 
-            || perms.Contains("ManageApps");
+            return perms.Contains("SuperAccess") || perms.Contains("ManageApps");
         }));
 
     options.AddPolicy("CanManageUsers", policy =>
@@ -82,8 +82,7 @@ builder.Services.AddAuthorization(options =>
         {
             var raw = context.User.FindFirst("permissions")?.Value;
             var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
-            return perms.Contains("SuperAccess") 
-            || perms.Contains("ManageUsers");
+            return perms.Contains("SuperAccess") || perms.Contains("ManageUsers");
         }));
 
     options.AddPolicy("CanManageRoles", policy =>
@@ -91,8 +90,7 @@ builder.Services.AddAuthorization(options =>
         {
             var raw = context.User.FindFirst("permissions")?.Value;
             var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
-            return perms.Contains("SuperAccess") 
-            || perms.Contains("ManageRoles");
+            return perms.Contains("SuperAccess") || perms.Contains("ManageRoles");
         }));
 
     options.AddPolicy("CanManagePermissions", policy =>
@@ -100,12 +98,12 @@ builder.Services.AddAuthorization(options =>
         {
             var raw = context.User.FindFirst("permissions")?.Value;
             var perms = JsonConvert.DeserializeObject<List<string>>(raw ?? "[]");
-            return perms.Contains("SuperAccess") 
-            || perms.Contains("ManagePermissions");
+            return perms.Contains("SuperAccess") || perms.Contains("ManagePermissions");
         }));
 });
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Password.RequireDigit = true;
@@ -117,17 +115,28 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 builder.Services.AddHttpClient();
 
-builder.Services.AddDbContext<AuthDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AuthDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register repos
+// Register repos and application services
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 
-builder.Services.AddEndpointsApiExplorer();
+// Register DbInitializer
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+
+// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "AuthService.API", Version = "v1" });
-
+    // Grouped docs
+    c.SwaggerDoc("auth", new() { Title = "Auth Endpoints", Version = "v1" });
+    c.SwaggerDoc("users", new() { Title = "User Endpoints", Version = "v1" });
+    c.SwaggerDoc("apps", new() { Title = "App Endpoints", Version = "v1" });
+    c.SwaggerDoc("roles", new() { Title = "Role Endpoints", Version = "v1" });
+    c.SwaggerDoc("permissions", new() { Title = "Permission Endpoints", Version = "v1" });
+    c.SwaggerDoc("dashboard", new() { Title = "Dashboard Endpoints", Version = "v1" });
+    // JWT Auth in Swagger
     c.AddSecurityDefinition("Bearer", new()
     {
         Name = "Authorization",
@@ -135,7 +144,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer' followed by your token. Example: Bearer eyJhbGciOiJIUzI1NiIs..."
+        Description = "Dont Enter 'Bearer' followed by your token. Example: eyJhbGciOiJIUzI1NiIs..."
     });
 
     c.AddSecurityRequirement(new()
@@ -156,12 +165,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowReactDashboard"); //Apply the policy
+app.UseCors("AllowReactDashboard");
 
 app.UseRouting();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.UseMiddleware<AccountStatusMiddleware>();
@@ -169,5 +177,15 @@ app.UseMiddleware<AccountStatusMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+// === Run DbInitializer after migrations ===
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    await db.Database.MigrateAsync();
+
+    var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await initializer.SeedAsync();
+}
 
 app.Run();

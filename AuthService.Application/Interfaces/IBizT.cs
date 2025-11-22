@@ -1,27 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using AuthService.Domain.Interfaces;
 
 namespace AuthService.Application.Interfaces
 {
+    /// <summary>
+    /// Base Biz interface providing unit of work contract.
+    /// </summary>
     public interface IBiz<T> where T : class
     {
-        IRepository<T> Repository { get; }
+        /// <summary>
+        /// Persist changes to the database via UnitOfWork.
+        /// </summary>
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
-        // Expose the typed repositories you registered earlier
-        IUserRepository UserRepository { get; }
-        IAppRepository AppRepository { get; }
-        IRoleRepository RoleRepository { get; }
-        IPermissionRepository PermissionRepository { get; }
-        IUserAppRepository UserAppRepository { get; }
-        IUserRoleRepository UserRoleRepository { get; }
-        IRolePermissionRepository RolePermissionRepository { get; }
-        IUserAppStatusRepository UserAppStatusRepository { get; }
-        IPasswordResetTokenRepository PasswordResetTokenRepository { get; }
-
-        Task<int> SaveChangesAsync();
+        /// <summary>
+        /// Execute an action inside a database transaction.
+        /// </summary>
+        Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
     }
 }

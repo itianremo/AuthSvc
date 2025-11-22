@@ -1,40 +1,44 @@
-﻿using AuthService.Application.Interfaces;
-using AuthService.Domain.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+﻿using AuthService.Domain.Interfaces;
+using AuthService.Application.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AuthService.Application.Services
 {
-    public class Biz<T> : IBiz<T> where T : class
+    /// <summary>
+    /// Base Biz class providing repository access and unit of work handling.
+    /// </summary>
+    public abstract class Biz<T> : IBiz<T> where T : class
     {
-        private readonly IServiceProvider _provider;
+        protected readonly IServiceProvider _provider;
+        protected readonly IUnitOfWork _unitOfWork;
 
-        public Biz(IServiceProvider provider)
+        protected Biz(IServiceProvider provider, IUnitOfWork unitOfWork)
         {
             _provider = provider;
+            _unitOfWork = unitOfWork;
         }
 
-        // Core repository for the generic T
-        public IRepository<T> Repository => _provider.GetRequiredService<IRepository<T>>();
-
-        // Expose the concrete repositories via the IServiceProvider
-        public IUserRepository UserRepository => _provider.GetRequiredService<IUserRepository>();
-        public IAppRepository AppRepository => _provider.GetRequiredService<IAppRepository>();
-        public IRoleRepository RoleRepository => _provider.GetRequiredService<IRoleRepository>();
-        public IPermissionRepository PermissionRepository => _provider.GetRequiredService<IPermissionRepository>();
-        public IUserAppRepository UserAppRepository => _provider.GetRequiredService<IUserAppRepository>();
-        public IUserRoleRepository UserRoleRepository => _provider.GetRequiredService<IUserRoleRepository>();
-        public IRolePermissionRepository RolePermissionRepository => _provider.GetRequiredService<IRolePermissionRepository>();
-        public IUserAppStatusRepository UserAppStatusRepository => _provider.GetRequiredService<IUserAppStatusRepository>();
-        public IPasswordResetTokenRepository PasswordResetTokenRepository => _provider.GetRequiredService<IPasswordResetTokenRepository>();
-
-        public Task<int> SaveChangesAsync()
+        // === Expose SaveChangesAsync consistently ===
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return Repository.SaveChangesAsync();
+            return _unitOfWork.SaveChangesAsync(cancellationToken);
         }
+
+        // === Expose transaction execution ===
+        public Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+        {
+            return _unitOfWork.ExecuteInTransactionAsync(action, cancellationToken);
+        }
+
+        // === Repository accessors for all core entities ===
+        protected IUserRepository UserRepository => _unitOfWork.Users;
+        protected IRoleRepository RoleRepository => _unitOfWork.Roles;
+        protected IPermissionRepository PermissionRepository => _unitOfWork.Permissions;
+        protected IAppRepository AppRepository => _unitOfWork.Apps;
+        protected IUserAppStatusRepository UserAppStatusRepository => _unitOfWork.UserAppStatuses;
+        protected IPasswordResetTokenRepository PasswordResetTokenRepository => _unitOfWork.PasswordResetTokens; 
+
     }
 }

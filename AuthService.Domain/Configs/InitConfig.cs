@@ -4,7 +4,7 @@
     {
         public string SuperAccess { get; set; }
         public string ManageApps { get; set; }
-        public string Assign { get; set; }
+        public string ManageAssign { get; set; }
         public string ManageUsers { get; set; }
         public string ManageRoles { get; set; }
         public string ManagePermissions { get; set; }
@@ -24,7 +24,7 @@
         public string UserEmail { get; set; }
         public string UserPhoneNumber { get; set; }
         public string UserPasswordHash { get; set; }
-        public string UserGlobalAccountStatus { get; set; }
+        public AppAccountStatus UserGlobalAccountStatus { get; set; }
         public bool UserIsEmailVerified { get; set; }
         public bool UserIsPhoneVerified { get; set; }
         public DateTime UserCreatedAt { get; set; }

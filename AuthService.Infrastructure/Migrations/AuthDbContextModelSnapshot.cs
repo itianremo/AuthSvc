@@ -30,7 +30,7 @@ namespace AuthService.Infrastructure.Migrations
 
                     b.Property<string>("AppName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("AutoApproveUsers")
                         .HasColumnType("bit");
@@ -48,13 +48,16 @@ namespace AuthService.Infrastructure.Migrations
 
                     b.HasKey("AppId");
 
+                    b.HasIndex("AppName")
+                        .IsUnique();
+
                     b.ToTable("Apps");
 
                     b.HasData(
                         new
                         {
                             AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
-                            AppName = "GlobalAdminApp",
+                            AppName = "Global Admin App",
                             AutoApproveUsers = false,
                             IsCoreApp = true,
                             RedirectUrls = "http://localhost:3000/auth/callback",
@@ -96,9 +99,12 @@ namespace AuthService.Infrastructure.Migrations
 
                     b.Property<string>("PermissionName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("PermissionId");
+
+                    b.HasIndex("PermissionName")
+                        .IsUnique();
 
                     b.ToTable("Permissions");
 
@@ -108,36 +114,6 @@ namespace AuthService.Infrastructure.Migrations
                             PermissionId = new Guid("9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"),
                             IsSystemDefined = true,
                             PermissionName = "SuperAccess"
-                        },
-                        new
-                        {
-                            PermissionId = new Guid("f3b2c1d4-8e9a-4f2b-9c1d-7a6e5b4c3d2a"),
-                            IsSystemDefined = true,
-                            PermissionName = "ManageApps"
-                        },
-                        new
-                        {
-                            PermissionId = new Guid("1c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f"),
-                            IsSystemDefined = true,
-                            PermissionName = "ManageUsers"
-                        },
-                        new
-                        {
-                            PermissionId = new Guid("9a7f6e5d-4c3b-2a1f-8e9d-0f1e2d3c4b5a"),
-                            IsSystemDefined = true,
-                            PermissionName = "ManageRoles"
-                        },
-                        new
-                        {
-                            PermissionId = new Guid("a1b2c3d4-e5f6-7890-abcd-1234567890ef"),
-                            IsSystemDefined = true,
-                            PermissionName = "ManagePermissions"
-                        },
-                        new
-                        {
-                            PermissionId = new Guid("0f1e2d3c-4b5a-6978-8e9d-abcdef123456"),
-                            IsSystemDefined = true,
-                            PermissionName = "ManageAssigns"
                         });
                 });
 
@@ -169,33 +145,7 @@ namespace AuthService.Infrastructure.Migrations
                             RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
                             AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
                             IsSystemDefined = true,
-                            RoleName = "RootAdmin"
-                        });
-                });
-
-            modelBuilder.Entity("AuthService.Domain.Entities.RolePermission", b =>
-                {
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("PermissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RolePermissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("RoleId", "PermissionId");
-
-                    b.HasIndex("PermissionId");
-
-                    b.ToTable("RolePermissions");
-
-                    b.HasData(
-                        new
-                        {
-                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
-                            PermissionId = new Guid("9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"),
-                            RolePermissionId = new Guid("0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d")
+                            RoleName = "Root Admin"
                         });
                 });
 
@@ -212,10 +162,6 @@ namespace AuthService.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("GlobalAccountStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()
@@ -235,6 +181,9 @@ namespace AuthService.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("UserId");
 
                     b.HasIndex("Email")
@@ -251,30 +200,23 @@ namespace AuthService.Infrastructure.Migrations
                             UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f"),
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@authsvc.local",
-                            GlobalAccountStatus = "active",
                             HashedPassword = "AQAAAAIAAYagAAAAEOs3vT6YZ5lIVhQRS7xFq17KvA/u2g7qv+9s0MH2FXyXdvsHLg0rMqwL9KeGKXOvdw==",
                             IsDeleted = false,
                             IsEmailVerified = true,
                             IsPhoneVerified = true,
-                            PhoneNumber = "+201144664441"
+                            PhoneNumber = "+201144664441",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
-            modelBuilder.Entity("AuthService.Domain.Entities.UserApp", b =>
+            modelBuilder.Entity("AuthService.Domain.Entities.UserAppStatus", b =>
                 {
                     b.Property<Guid>("UserAppId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccountStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid>("AppId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LastLogin")
                         .HasColumnType("datetime2");
@@ -286,38 +228,6 @@ namespace AuthService.Infrastructure.Migrations
                     b.Property<DateTime?>("RefreshTokenExpiry")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("UserAppId");
-
-                    b.HasIndex("AppId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserApps");
-
-                    b.HasData(
-                        new
-                        {
-                            UserAppId = new Guid("7d8e9f0a-1b2c-3d4e-5f6a-7b8c9d0e1f2a"),
-                            AccountStatus = "active",
-                            AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RefreshToken = "",
-                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f")
-                        });
-                });
-
-            modelBuilder.Entity("AuthService.Domain.Entities.UserAppStatus", b =>
-                {
-                    b.Property<Guid>("UserAppStatusId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AppId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -325,44 +235,67 @@ namespace AuthService.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("UserAppStatusId");
+                    b.HasKey("UserAppId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("AppId");
+
+                    b.HasIndex("UserId", "AppId")
+                        .IsUnique();
 
                     b.ToTable("UserAppStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            UserAppId = new Guid("7d8e9f0a-1b2c-3d4e-5f6a-7b8c9d0e1f2a"),
+                            AppId = new Guid("0f8fad5b-d9cb-469f-a165-70867728950e"),
+                            RefreshToken = "",
+                            Status = "active",
+                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f")
+                        });
                 });
 
-            modelBuilder.Entity("AuthService.Domain.Entities.UserRole", b =>
+            modelBuilder.Entity("RolePermissions", b =>
                 {
-                    b.Property<Guid>("UserRoleId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AppId")
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("RolePermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
+                            PermissionId = new Guid("9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c")
+                        });
+                });
+
+            modelBuilder.Entity("UserRoles", b =>
+                {
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("UserRoleId");
-
-                    b.HasIndex("AppId");
+                    b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("UserRoles");
 
                     b.HasData(
                         new
                         {
-                            UserRoleId = new Guid("8e9f0a1b-2c3d-4e5f-6a7b-8c9d0e1f2a3b"),
-                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7"),
-                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f")
+                            UserId = new Guid("6c7d8e9f-0a1b-2c3d-4e5f-6a7b8c9d0e1f"),
+                            RoleId = new Guid("7c9e6679-7425-40de-944b-e07fc1f90ae7")
                         });
                 });
 
@@ -388,35 +321,16 @@ namespace AuthService.Infrastructure.Migrations
                     b.Navigation("App");
                 });
 
-            modelBuilder.Entity("AuthService.Domain.Entities.RolePermission", b =>
-                {
-                    b.HasOne("AuthService.Domain.Entities.Permission", "Permission")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AuthService.Domain.Entities.Role", "Role")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permission");
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("AuthService.Domain.Entities.UserApp", b =>
+            modelBuilder.Entity("AuthService.Domain.Entities.UserAppStatus", b =>
                 {
                     b.HasOne("AuthService.Domain.Entities.App", "App")
-                        .WithMany("UserApps")
+                        .WithMany("UserStatuses")
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("AuthService.Domain.Entities.User", "User")
-                        .WithMany("UserApps")
+                        .WithMany("AppStatuses")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -426,68 +340,46 @@ namespace AuthService.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AuthService.Domain.Entities.UserAppStatus", b =>
+            modelBuilder.Entity("RolePermissions", b =>
                 {
-                    b.HasOne("AuthService.Domain.Entities.User", "User")
-                        .WithMany("AppStatuses")
-                        .HasForeignKey("UserId")
+                    b.HasOne("AuthService.Domain.Entities.Permission", null)
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.HasOne("AuthService.Domain.Entities.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("AuthService.Domain.Entities.UserRole", b =>
+            modelBuilder.Entity("UserRoles", b =>
                 {
-                    b.HasOne("AuthService.Domain.Entities.App", null)
-                        .WithMany("UserRoles")
-                        .HasForeignKey("AppId");
-
-                    b.HasOne("AuthService.Domain.Entities.Role", "Role")
-                        .WithMany("UserRoles")
+                    b.HasOne("AuthService.Domain.Entities.Role", null)
+                        .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AuthService.Domain.Entities.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
+                    b.HasOne("AuthService.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AuthService.Domain.Entities.App", b =>
                 {
                     b.Navigation("Roles");
 
-                    b.Navigation("UserApps");
-
-                    b.Navigation("UserRoles");
-                });
-
-            modelBuilder.Entity("AuthService.Domain.Entities.Permission", b =>
-                {
-                    b.Navigation("RolePermissions");
-                });
-
-            modelBuilder.Entity("AuthService.Domain.Entities.Role", b =>
-                {
-                    b.Navigation("RolePermissions");
-
-                    b.Navigation("UserRoles");
+                    b.Navigation("UserStatuses");
                 });
 
             modelBuilder.Entity("AuthService.Domain.Entities.User", b =>
                 {
                     b.Navigation("AppStatuses");
-
-                    b.Navigation("UserApps");
-
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

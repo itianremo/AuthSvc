@@ -1,14 +1,23 @@
-﻿using AuthService.Domain.Entities;
+﻿using AuthService.Application.DTOs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AuthService.Application.Interfaces
 {
-    public interface IRolePermissionBiz : IBiz<RolePermission>
+    public interface IRolePermissionBiz
     {
-        // Add role-permission-specific business methods if needed
+        // Retrieval
+        Task<IEnumerable<RolePermissionDto>> GetByRoleIdAsync(Guid roleId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<RolePermissionDto>> GetByPermissionIdAsync(Guid permissionId, CancellationToken cancellationToken = default);
+
+        // Linking/unlinking
+        Task<bool> LinkPermissionToRoleAsync(Guid roleId, Guid permissionId, CancellationToken cancellationToken = default);
+        Task<bool> UnlinkPermissionFromRoleAsync(Guid roleId, Guid permissionId, CancellationToken cancellationToken = default);
+
+        // Batch operations
+        Task<bool> LinkPermissionsToRoleAsync(Guid roleId, IEnumerable<Guid> permissionIds, CancellationToken cancellationToken = default);
+        Task<bool> UnlinkPermissionsFromRoleAsync(Guid roleId, IEnumerable<Guid> permissionIds, CancellationToken cancellationToken = default);
     }
 }

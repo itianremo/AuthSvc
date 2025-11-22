@@ -5,7 +5,7 @@ using AuthService.Domain.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AuthService.Infrastructure.Repositories
@@ -21,15 +21,15 @@ namespace AuthService.Infrastructure.Repositories
             _dbSet = _context.Set<T>();
         }
 
-        public virtual async Task<T?> GetByIdAsync(Guid id)
+        public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            // Assumes primary key named Id or first key; you may override in specific repos if needed
-            return await _dbSet.FindAsync(id);
+            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
         }
 
-        public virtual async Task<IEnumerable<T>> GetAllAsync()
+        public virtual async Task<IEnumerable<T>> GetAllAsync(bool asNoTracking = true, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AsNoTracking().ToListAsync();
+            var query = asNoTracking ? _dbSet.AsNoTracking() : _dbSet;
+            return await query.ToListAsync(cancellationToken);
         }
 
         public virtual IQueryable<T> Query()
@@ -42,9 +42,14 @@ namespace AuthService.Infrastructure.Repositories
             return _dbSet.Where(predicate).AsQueryable();
         }
 
-        public virtual async Task AddAsync(T entity)
+        public virtual async Task AddAsync(T entity, CancellationToken cancellationToken = default)
         {
-            await _dbSet.AddAsync(entity);
+            await _dbSet.AddAsync(entity, cancellationToken);
+        }
+
+        public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            await _dbSet.AddRangeAsync(entities, cancellationToken);
         }
 
         public virtual void Update(T entity)
@@ -52,14 +57,29 @@ namespace AuthService.Infrastructure.Repositories
             _dbSet.Update(entity);
         }
 
+        public virtual void UpdateRange(IEnumerable<T> entities)
+        {
+            _dbSet.UpdateRange(entities);
+        }
+
         public virtual void Remove(T entity)
         {
             _dbSet.Remove(entity);
         }
 
-        public virtual async Task<int> SaveChangesAsync()
+        public virtual void RemoveRange(IEnumerable<T> entities)
         {
-            return await _context.SaveChangesAsync();
+            _dbSet.RemoveRange(entities);
+        }
+
+        public virtual async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(CancellationToken cancellationToken = default)
+        {
+            return _dbSet.CountAsync(cancellationToken);
         }
     }
 }

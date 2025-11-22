@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   auth-api:
+    container_name: auth-api
     build:
       context: .
       dockerfile: AuthService.API/Dockerfile 
@@ -12,6 +13,8 @@ services:
       - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=AuthDb;User Id=sa;Password=admin123!@#;TrustServerCertificate=True;
     networks:
       - svcauth-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   svcauth-net:

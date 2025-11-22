@@ -8,19 +8,19 @@ namespace AuthService.Domain.Entities
 {
     public class Role
     {
-        public Guid RoleId { get; set; }
+        public Guid RoleId { get; set; } = Guid.NewGuid();
         public string RoleName { get; set; }
-        public Guid AppId { get; set; }
-
-        public App App { get; set; }
-        public ICollection<RolePermission> RolePermissions { get; set; }
-        public ICollection<UserRole> UserRoles { get; set; }
         public bool IsSystemDefined { get; set; } = false;
+
+        public Guid AppId { get; set; } = Guid.NewGuid();
+        public App App { get; set; }
+        public ICollection<Permission> Permissions { get; set; }
+        public ICollection<User> Users { get; set; }
 
         public Role()
         {
-            RolePermissions = new HashSet<RolePermission>();
-            UserRoles = new HashSet<UserRole>();
+            Permissions = new HashSet<Permission>();
+            Users = new HashSet<User>();
         }
     }
 
