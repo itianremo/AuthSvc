@@ -1,6 +1,7 @@
 ﻿using AuthService.API.Extensions;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
+using AuthService.Domain.Configs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -131,7 +132,7 @@ namespace AuthService.API.Controllers
             if (!this.IsGlobalAdminApp() && this.GetAppIdFromToken() != dto.AppId)
                 return Forbid();
 
-            await _userAppStatusBiz.UpdateStatusAsync(dto.UserId, dto.AppId,AppAccountStatus.Approved, cancellationToken);
+            await _userAppStatusBiz.UpdateStatusAsync(dto.UserId, dto.AppId, AppAccountStatus.Approved, cancellationToken);
             return Ok(new { message = "User approved successfully." });
         }
 
@@ -140,13 +141,18 @@ namespace AuthService.API.Controllers
         public async Task<IActionResult> UpdateUserStatus([FromBody] UpdateUserAppStatusDto dto, CancellationToken cancellationToken)
         {
             if (dto is null)
-                return BadRequest();
+                return BadRequest(new { code = "InvalidPayload", message = "Request body is required." });
 
             if (!this.IsGlobalAdminApp() && this.GetAppIdFromToken() != dto.AppId)
                 return Forbid();
 
-            await _userAppStatusBiz.UpdateStatusAsync(dto.UserId, dto.AppId, dto.NewStatus, cancellationToken);
-            return Ok(new { message = $"User status updated to {dto.NewStatus}." });
+            // Convert string to enum safely
+            if (!Enum.TryParse<AppAccountStatus>(dto.NewStatus, true, out var statusEnum))
+                return BadRequest(new { code = "InvalidStatus", message = $"Invalid status value '{dto.NewStatus}'." });
+
+            await _userAppStatusBiz.UpdateStatusAsync(dto.UserId, dto.AppId, statusEnum, cancellationToken);
+
+            return Ok(new { message = $"User status updated to {statusEnum}." });
         }
 
         [HttpGet("{appId:guid}/users")]

@@ -19,7 +19,7 @@ namespace AuthService.Application.Services
         public Task<UserAppStatus?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
             => UserAppStatusRepository.GetByRefreshTokenAsync(refreshToken, cancellationToken);
 
-        public Task<UserAppStatus?> GetByStatusAsync(string status, CancellationToken cancellationToken = default)
+        public Task<UserAppStatus?> GetByStatusAsync(AppAccountStatus status, CancellationToken cancellationToken = default)
             => UserAppStatusRepository.GetByStatusAsync(status, cancellationToken);
 
         public Task<ICollection<UserAppStatus>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -52,14 +52,11 @@ namespace AuthService.Application.Services
         }
 
         // === Step 4: Status update ===
-        public async Task<bool> UpdateStatusAsync(Guid userId, Guid appId, string statusValue, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateStatusAsync(Guid userId, Guid appId, AppAccountStatus statusValue, CancellationToken cancellationToken = default)
         {
             var statuses = await UserAppStatusRepository.GetByUserIdAsync(userId, cancellationToken);
             var status = statuses.FirstOrDefault(s => s.AppId == appId)
                 ?? throw new InvalidOperationException("App status not found.");
-
-            if (string.Equals(status.Status, "System", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("System-defined statuses cannot be updated.");
 
             await UserAppStatusRepository.UpdateStatusAsync(userId, appId, statusValue, cancellationToken);
             await SaveChangesAsync(cancellationToken);

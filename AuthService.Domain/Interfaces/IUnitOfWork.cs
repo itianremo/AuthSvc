@@ -6,9 +6,6 @@ namespace AuthService.Domain.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-        Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
-
         IUserRepository Users { get; }
         IRoleRepository Roles { get; }
         IPermissionRepository Permissions { get; }
@@ -18,6 +15,11 @@ namespace AuthService.Domain.Interfaces
 
         IUserRoleRepository UserRoles { get; }
         IRolePermissionRepository RolePermissions { get; }
+
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
+        Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default);
+
     }
 
 }

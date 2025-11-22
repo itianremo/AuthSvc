@@ -128,14 +128,18 @@ namespace AuthService.Application.Services
             return ua;
         }
 
-        public async Task<bool> UpdateAllAppStatusesAsync(Guid userId, string statusValue, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateAllAppStatusesAsync(Guid userId, AppAccountStatus status, CancellationToken cancellationToken = default)
         {
             var statuses = await _unitOfWork.UserAppStatuses.GetByUserIdAsync(userId, cancellationToken);
+            if (statuses == null || !statuses.Any())
+                return false;
+
             foreach (var s in statuses)
             {
-                s.Status = statusValue;
+                s.Status = status;
                 _unitOfWork.UserAppStatuses.Update(s);
             }
+
             await SaveChangesAsync(cancellationToken);
             return true;
         }
@@ -241,7 +245,7 @@ namespace AuthService.Application.Services
             var app = await AppRepository.GetByIdAsync(dto.AppId, cancellationToken);
             if (app == null) return (false, "Invalid AppId.", null);
 
-            return await ExecuteInTransactionAsync(async () =>
+            return await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 var existingUser = await UserRepository.Query()
                     .Include(u => u.AppStatuses)
@@ -290,6 +294,7 @@ namespace AuthService.Application.Services
                 return (true, "User registered successfully.", user);
             }, cancellationToken);
         }
+
 
         public async Task<(bool Success, string Message, object Data)> RefreshTokenAsync(string refreshToken, Guid appId, CancellationToken cancellationToken = default)
         {
@@ -359,7 +364,12 @@ namespace AuthService.Application.Services
         }
 
 
-        public async Task<IReadOnlyList<UserListDto>> GetUsersPagedAsync(Guid callerAppId, bool isGlobalAdmin, int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<UserListDto>> GetUsersPagedAsync(
+            Guid callerAppId,
+            bool isGlobalAdmin,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default)
         {
             var baseQuery = UserRepository.Query().Where(u => !u.IsDeleted);
 
@@ -378,8 +388,8 @@ namespace AuthService.Application.Services
                     PhoneNumber = u.PhoneNumber,
                     AccountStatus = u.AppStatuses
                         .Where(ua => ua.AppId == callerAppId)
-                        .Select(ua => ua.Status)
-                        .FirstOrDefault() ?? AppAccountStatus.Pending,
+                        .Select(ua => (AppAccountStatus?)ua.Status)   // cast to nullable
+                        .FirstOrDefault().ToString() ?? AppAccountStatus.Pending.ToString(),
                     IsDeleted = u.IsDeleted,
                     CreatedAt = u.CreatedAt
                 })
@@ -387,6 +397,7 @@ namespace AuthService.Application.Services
 
             return users;
         }
+
 
         public async Task<bool> SoftDeleteUserAsync(Guid userId, CancellationToken cancellationToken = default)
         {

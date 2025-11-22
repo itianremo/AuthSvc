@@ -1,4 +1,5 @@
 ﻿using AuthService.Application.Interfaces;
+using AuthService.Domain.Configs;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -106,9 +107,9 @@ namespace AuthService.Application.Services
 
             foreach (var status in app.UserStatuses)
             {
-                if (string.Equals(status.Status, "Deleted", StringComparison.OrdinalIgnoreCase))
+                if (status.Status== AppAccountStatus.Deleted)
                 {
-                    status.Status = app.AutoApproveUsers ? "Approved" : "Pending"; // NEW CHANGE
+                    status.Status = app.AutoApproveUsers ? AppAccountStatus.Approved : AppAccountStatus.Pending;
                     UserAppStatusRepository.Update(status);
                 }
             }

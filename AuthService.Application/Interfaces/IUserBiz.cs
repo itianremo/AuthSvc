@@ -1,4 +1,5 @@
 ﻿using AuthService.Application.DTOs;
+using AuthService.Domain.Configs;
 using AuthService.Domain.Entities;
 using System;
 using System.Threading;
@@ -24,7 +25,7 @@ namespace AuthService.Application.Interfaces
         Task<UserAppStatus> AddUserToAppAsync(Guid userId, Guid appId, CancellationToken cancellationToken = default);
         Task<bool> RemoveUserFromAppAsync(Guid userId, Guid appId, CancellationToken cancellationToken = default);
         Task<UserAppStatus> UndeleteUserInAppAsync(Guid userId, Guid appId, CancellationToken cancellationToken = default);
-        Task<bool> UpdateAllAppStatusesAsync(Guid userId, string statusValue, CancellationToken cancellationToken = default);
+        Task<bool> UpdateAllAppStatusesAsync(Guid userId, AppAccountStatus statusValue, CancellationToken cancellationToken = default);
 
         // Password reset
         Task<bool> AdminResetPasswordAsync(Guid adminId, Guid userId, CancellationToken cancellationToken = default);

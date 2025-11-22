@@ -1,4 +1,5 @@
-﻿using AuthService.Domain.Entities;
+﻿using AuthService.Domain.Configs;
+using AuthService.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,7 +11,7 @@ namespace AuthService.Application.Interfaces
     {
         // Retrieval
         Task<UserAppStatus?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
-        Task<UserAppStatus?> GetByStatusAsync(string status, CancellationToken cancellationToken = default);
+        Task<UserAppStatus?> GetByStatusAsync(AppAccountStatus status, CancellationToken cancellationToken = default);
         Task<ICollection<UserAppStatus>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<ICollection<UserAppStatus>> GetByAppIdAsync(Guid appId, CancellationToken cancellationToken = default);
 
@@ -21,7 +22,7 @@ namespace AuthService.Application.Interfaces
         Task<bool> UpdateLastLoginAsync(Guid userId, Guid appId, CancellationToken cancellationToken = default);
 
         // Status update
-        Task<bool> UpdateStatusAsync(Guid userId, Guid appId, string statusValue, CancellationToken cancellationToken = default);
+        Task<bool> UpdateStatusAsync(Guid userId, Guid appId, AppAccountStatus statusValue, CancellationToken cancellationToken = default);
 
         Task<List<object>> GetPendingUsersAsync(Guid appId, CancellationToken cancellationToken = default);
 

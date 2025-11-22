@@ -173,7 +173,11 @@ namespace AuthService.API.Controllers
         [HttpPost("{userId:guid}/update-status")]
         public async Task<IActionResult> UpdateStatus(Guid userId, [FromBody] UpdateStatusDto dto, CancellationToken cancellationToken)
         {
-            var success = await _userBiz.UpdateAllAppStatusesAsync(userId, dto.StatusValue, cancellationToken);
+            if (!Enum.TryParse<AppAccountStatus>(dto.StatusValue, true, out var statusEnum))
+                return BadRequest(new { code = "InvalidStatus", message = "Invalid status value." });
+
+            var success = await _userBiz.UpdateAllAppStatusesAsync(userId, statusEnum, cancellationToken);
+            
             if (!success)
                 return BadRequest(new { message = "Status update failed." });
 

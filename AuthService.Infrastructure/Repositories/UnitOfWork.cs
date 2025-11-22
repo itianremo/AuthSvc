@@ -10,6 +10,15 @@ namespace AuthService.Infrastructure.Repositories
     {
         private readonly AuthDbContext _context;
 
+        public IUserRepository Users => new UserRepository(_context);
+        public IRoleRepository Roles => new RoleRepository(_context);
+        public IPermissionRepository Permissions => new PermissionRepository(_context);
+        public IAppRepository Apps => new AppRepository(_context);
+        public IUserAppStatusRepository UserAppStatuses => new UserAppStatusRepository(_context);
+        public IPasswordResetTokenRepository PasswordResetTokens => new PasswordResetTokenRepository(_context);
+        public IRolePermissionRepository RolePermissions => new RolePermissionRepository(_context);
+        public IUserRoleRepository UserRoles => new UserRoleRepository(_context);
+
         public UnitOfWork(AuthDbContext context) => _context = context;
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -17,7 +26,6 @@ namespace AuthService.Infrastructure.Repositories
             return await _context.SaveChangesAsync(cancellationToken);
         }
 
-        // === NEW CHANGE: Transaction support ===
         public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken ct = default)
         {
             await using IDbContextTransaction tx = await _context.Database.BeginTransactionAsync(ct);
@@ -34,14 +42,23 @@ namespace AuthService.Infrastructure.Repositories
             }
         }
 
-        public IUserRepository Users => new UserRepository(_context);
-        public IRoleRepository Roles => new RoleRepository(_context);
-        public IPermissionRepository Permissions => new PermissionRepository(_context);
-        public IAppRepository Apps => new AppRepository(_context);
-        public IUserAppStatusRepository UserAppStatuses => new UserAppStatusRepository(_context);
-        public IPasswordResetTokenRepository PasswordResetTokens => new PasswordResetTokenRepository(_context);
-        public IRolePermissionRepository RolePermissions => new RolePermissionRepository(_context);
-        public IUserRoleRepository UserRoles => new UserRoleRepository(_context);
+        public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, CancellationToken ct = default)
+        {
+            await using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var result = await action();
+                await _context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+                return result;
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        }
+
 
         public void Dispose()
         {
