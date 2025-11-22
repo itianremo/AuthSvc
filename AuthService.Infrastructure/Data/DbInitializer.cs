@@ -145,14 +145,15 @@ namespace AuthService.Infrastructure.Data
             }
 
             // === Join: UsersRoles ===
-            var hasUserRole = await _db.Set<Dictionary<string, object>>("UsersRoles")
+            var hasUserRole = await _db.Set<Dictionary<string, object>>("UserRoles")
                 .AnyAsync(x =>
-                    EF.Property<Guid>(x, "UserId") == s.UserId &&
-                    EF.Property<Guid>(x, "RoleId") == s.RoleId, cancellationToken);
+                EF.Property<Guid>(x, "UserId") == s.UserId &&
+                EF.Property<Guid>(x, "RoleId") == s.RoleId,
+                cancellationToken);
 
             if (!hasUserRole)
             {
-                _db.Set<Dictionary<string, object>>("UsersRoles")
+                _db.Set<Dictionary<string, object>>("UserRoles")
                    .Add(new Dictionary<string, object>
                    {
                        ["UserId"] = s.UserId,

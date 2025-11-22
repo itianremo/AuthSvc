@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.API.Controllers
 {
-    [ApiExplorerSettings(GroupName = "permissions")]
+    //[ApiExplorerSettings(GroupName = "permissions")]
     [ApiController]
     [Route("api/permissions")]
     [Authorize(Policy = "CanManagePermissions")]

@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace AuthService.API.Controllers
 {
-    [ApiExplorerSettings(GroupName = "auth")]
+    //[ApiExplorerSettings(GroupName = "auth")]
     [ApiController]
     [Route("api/auth")]
     public class AuthController : ControllerBase

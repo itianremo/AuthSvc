@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.API.Controllers
 {
-    [ApiExplorerSettings(GroupName = "roles")]
+    //[ApiExplorerSettings(GroupName = "roles")]
     [ApiController]
     [Route("api/roles")]
     [Authorize(Policy = "CanManageRoles")]

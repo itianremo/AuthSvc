@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.API.Controllers
 {
-    [ApiExplorerSettings(GroupName = "dashboard")]
+    //[ApiExplorerSettings(GroupName = "dashboard")]
     [ApiController]
     [Route("api/[controller]")]
     public class DashboardController : ControllerBase

@@ -128,14 +128,14 @@ builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 // Swagger
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "AuthService.API", Version = "v1" });
+    c.SwaggerDoc("v1", new() { Title = "Auth Service APIs", Version = "v1" });
     // Grouped docs
-    c.SwaggerDoc("auth", new() { Title = "Auth Endpoints", Version = "v1" });
-    c.SwaggerDoc("users", new() { Title = "User Endpoints", Version = "v1" });
-    c.SwaggerDoc("apps", new() { Title = "App Endpoints", Version = "v1" });
-    c.SwaggerDoc("roles", new() { Title = "Role Endpoints", Version = "v1" });
-    c.SwaggerDoc("permissions", new() { Title = "Permission Endpoints", Version = "v1" });
-    c.SwaggerDoc("dashboard", new() { Title = "Dashboard Endpoints", Version = "v1" });
+    //c.SwaggerDoc("auth", new() { Title = "Auth Endpoints", Version = "v1" });
+    //c.SwaggerDoc("users", new() { Title = "User Endpoints", Version = "v1" });
+    //c.SwaggerDoc("apps", new() { Title = "App Endpoints", Version = "v1" });
+    //c.SwaggerDoc("roles", new() { Title = "Role Endpoints", Version = "v1" });
+    //c.SwaggerDoc("permissions", new() { Title = "Permission Endpoints", Version = "v1" });
+    //c.SwaggerDoc("dashboard", new() { Title = "Dashboard Endpoints", Version = "v1" });
     // JWT Auth in Swagger
     c.AddSecurityDefinition("Bearer", new()
     {

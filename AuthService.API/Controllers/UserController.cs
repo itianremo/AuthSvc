@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.API.Controllers
 {
-    [ApiExplorerSettings(GroupName = "users")]
+    //[ApiExplorerSettings(GroupName = "users")]
     [ApiController]
     [Route("api/users")]
     [Authorize]
